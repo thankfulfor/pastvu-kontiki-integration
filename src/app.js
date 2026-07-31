@@ -409,12 +409,34 @@ function handleRangeInput() {
   renderBuildings();
 }
 
+function applyYearPeriod(period) {
+  yearFilter.from = period.from;
+  yearFilter.to = period.to;
+  updateRangeUi();
+  setSelectedObject(null);
+  setPastvuStatus('Выберите объект в выбранном диапазоне годов.');
+  renderBuildings();
+}
+
+function setupPeriodFilter() {
+  document.querySelectorAll('[data-period-index]').forEach((periodNode) => {
+    periodNode.addEventListener('click', () => {
+      const period = yearScale.periods[Number(periodNode.dataset.periodIndex)];
+
+      if (period) {
+        applyYearPeriod(period);
+      }
+    });
+  });
+}
+
 function setupYearFilter() {
   const fromInput = document.querySelector('#year-from');
   const toInput = document.querySelector('#year-to');
 
   fromInput?.addEventListener('input', handleRangeInput);
   toInput?.addEventListener('input', handleRangeInput);
+  setupPeriodFilter();
   updateRangeUi();
 }
 

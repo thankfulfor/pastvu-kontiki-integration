@@ -192,8 +192,17 @@ dd {
   border-radius: 4px;
 }
 
-.period-scale span {
+.period-scale button {
+  border: 0;
   background: var(--period-color);
+  cursor: pointer;
+}
+
+.period-scale button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid #ffffff;
+  outline-offset: -3px;
 }
 
 .period-labels {
