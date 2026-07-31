@@ -24,6 +24,10 @@ A map user opens a location, sees historical photos connected to this place, and
 - Can the prototype run as a static frontend, or does it need a small backend proxy?
 - What limitations should be documented for external developers?
 
+## First Iteration
+
+Limit the prototype to Moscow. This keeps the dataset small enough for manual checks and makes it easier to document the integration decisions before expanding the scope.
+
 ## Expected Outputs
 
 - a small working prototype;
