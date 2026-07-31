@@ -200,11 +200,13 @@ function renderPastvuPhotos(photos) {
 
       return `
         <article class="photo-card">
-          <a href="${pageUrl}" target="_blank" rel="noreferrer">
+          <a class="photo-card-link" href="${pageUrl}" target="_blank" rel="noreferrer">
             <img src="${imageUrl}" alt="">
-            <span>${title}</span>
+            <span class="photo-card-text">
+              <span>${title}</span>
+              <small>${year}</small>
+            </span>
           </a>
-          <small>${year}</small>
         </article>
       `;
     })

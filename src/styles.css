@@ -244,32 +244,42 @@ dd {
 }
 
 .photo-card {
-  display: grid;
-  gap: 6px;
+  display: block;
 }
 
-.photo-card a {
+.photo-card-link {
   display: grid;
-  gap: 8px;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 8px;
+  border: 1px solid #d9e2ef;
+  border-radius: 8px;
   color: #1d4ed8;
   font-weight: 700;
   text-decoration: none;
 }
 
-.photo-card a:hover {
+.photo-card-link:hover {
   text-decoration: underline;
 }
 
 .photo-card img {
-  width: 100%;
-  aspect-ratio: 4 / 3;
+  width: 92px;
+  height: 68px;
   object-fit: cover;
   border-radius: 6px;
   background: #dfe8f5;
 }
 
+.photo-card-text {
+  display: grid;
+  gap: 4px;
+}
+
 .photo-card small {
   color: #6b7a90;
+  font-weight: 400;
 }
 
 .map {
