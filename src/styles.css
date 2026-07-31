@@ -106,9 +106,13 @@ dd {
   margin-bottom: 14px;
 }
 
-.year-values {
+.year-values,
+.period-labels {
   display: flex;
   justify-content: space-between;
+}
+
+.year-values {
   color: #17212b;
   font-size: 22px;
   line-height: 1;
@@ -180,7 +184,8 @@ dd {
 }
 
 .period-scale {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
   height: 28px;
   margin-top: 10px;
   overflow: hidden;
@@ -188,31 +193,13 @@ dd {
 }
 
 .period-scale span {
-  flex: var(--period-years) 0 0;
   background: var(--period-color);
 }
 
 .period-labels {
-  position: relative;
-  height: 28px;
   margin-top: 6px;
   color: #6b7a90;
   font-size: 11px;
-}
-
-.period-labels span {
-  position: absolute;
-  left: var(--year-position);
-  transform: translateX(-50%);
-  white-space: nowrap;
-}
-
-.period-labels span:first-child {
-  transform: none;
-}
-
-.period-labels span:last-child {
-  transform: translateX(-100%);
 }
 
 .year-filter-note {
