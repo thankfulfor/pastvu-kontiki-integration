@@ -2,6 +2,7 @@ const fixtureUrl = './data/fixtures/old-moscow-sample.geojson';
 const pastvuApiUrl = 'https://api.pastvu.com/api2';
 const pastvuPhotoPageUrl = 'https://pastvu.com/p/';
 const pastvuImageUrl = 'https://pastvu.com/_p/d/';
+const yandexMapsUrl = 'https://yandex.ru/maps/';
 const yearScale = {
   min: 1357,
   max: 2021,
@@ -66,6 +67,17 @@ function formatYear(year, year2) {
   }
 
   return `${formatValue(year)}—${formatValue(year2)}`;
+}
+
+function buildYandexMapsLink(latlng) {
+  const lat = latlng.lat.toFixed(6);
+  const lng = latlng.lng.toFixed(6);
+  const params = new URLSearchParams({
+    ll: `${lng},${lat}`,
+    z: '17',
+  });
+
+  return `${yandexMapsUrl}?${params.toString()}`;
 }
 
 function buildPopup(properties) {
@@ -161,7 +173,7 @@ function setPastvuStatus(message) {
   }
 }
 
-function setSelectedObject(properties) {
+function setSelectedObject(properties, latlng) {
   const selectedNode = document.querySelector('#selected-object');
 
   if (!selectedNode) {
@@ -175,8 +187,17 @@ function setSelectedObject(properties) {
 
   const title = formatValue(properties.r_name || properties.r_adress);
   const year = formatValue(properties.r_years_str || properties.r_year_int);
+  const yandexUrl = latlng ? buildYandexMapsLink(latlng) : null;
 
-  selectedNode.innerHTML = `<strong>${title}</strong><span>${year}</span>`;
+  selectedNode.innerHTML = `
+    <strong>${title}</strong>
+    <span>${year}</span>
+    ${
+      yandexUrl
+        ? `<a href="${yandexUrl}" target="_blank" rel="noreferrer">Открыть место в Яндекс Картах</a>`
+        : ''
+    }
+  `;
 }
 
 function renderPastvuPhotos(photos) {
@@ -260,7 +281,7 @@ async function loadNearestPastvuPhotos(latlng) {
 async function handleBuildingClick(feature, layerItem) {
   const center = layerItem.getBounds().getCenter();
 
-  setSelectedObject(feature.properties);
+  setSelectedObject(feature.properties, center);
   setPastvuStatus('Ищу ближайшие фотографии...');
 
   try {

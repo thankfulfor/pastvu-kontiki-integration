@@ -235,6 +235,17 @@ dd {
   color: #17212b;
 }
 
+.selected-object a {
+  width: fit-content;
+  color: #1d4ed8;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.selected-object a:hover {
+  text-decoration: underline;
+}
+
 .pastvu-results {
   display: grid;
   gap: 12px;
