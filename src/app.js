@@ -24,10 +24,10 @@ const map = L.map('map', {
   scrollWheelZoom: true,
 }).setView([55.751244, 37.618423], 12);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   maxZoom: 19,
   attribution:
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
 }).addTo(map);
 
 const buildingPolygonLayer = L.layerGroup().addTo(map);
@@ -313,11 +313,11 @@ function addBuildingPoint(feature, layerItem) {
   const color = year === null ? '#64748b' : getPeriodColor(year);
 
   return L.circleMarker(center, {
-    radius: 4,
-    color,
-    weight: 1,
+    radius: 4.5,
+    color: '#ffffff',
+    weight: 1.2,
     fillColor: color,
-    fillOpacity: 0.85,
+    fillOpacity: 0.95,
   })
     .bindPopup(buildPopup(feature.properties, center))
     .bindTooltip(title, {
@@ -334,9 +334,9 @@ function createBuildingRecord(feature) {
   const polygon = L.geoJSON(feature, {
     style: {
       color,
-      weight: 1,
+      weight: 1.4,
       fillColor: color,
-      fillOpacity: 0.35,
+      fillOpacity: 0.55,
     },
     onEachFeature(item, layerItem) {
       layerItem.bindPopup(buildPopup(item.properties, layerItem.getBounds().getCenter()));
