@@ -74,17 +74,19 @@ function buildYandexMapsLink(latlng) {
   const lng = latlng.lng.toFixed(6);
   const params = new URLSearchParams({
     ll: `${lng},${lat}`,
+    text: `${lat} ${lng}`,
     z: '17',
   });
 
   return `${yandexMapsUrl}?${params.toString()}`;
 }
 
-function buildPopup(properties) {
+function buildPopup(properties, latlng) {
   const title = formatValue(properties.r_name || properties.r_adress);
   const year = formatValue(properties.r_years_str || properties.r_year_int);
   const address = formatValue(properties.r_adress);
   const floors = formatValue(properties.r_floors);
+  const yandexUrl = latlng ? buildYandexMapsLink(latlng) : null;
 
   return `
     <article class="popup">
@@ -102,6 +104,14 @@ function buildPopup(properties) {
           <dt>Этажей</dt>
           <dd>${floors}</dd>
         </div>
+        ${
+          yandexUrl
+            ? `<div>
+                <dt>Карта</dt>
+                <dd><a href="${yandexUrl}" target="_blank" rel="noreferrer">Открыть в Яндекс Картах</a></dd>
+              </div>`
+            : ''
+        }
       </dl>
     </article>
   `;
@@ -309,6 +319,7 @@ function addBuildingPoint(feature, layerItem) {
     fillColor: color,
     fillOpacity: 0.85,
   })
+    .bindPopup(buildPopup(feature.properties, center))
     .bindTooltip(title, {
       direction: 'top',
       opacity: 0.9,
@@ -328,7 +339,7 @@ function createBuildingRecord(feature) {
       fillOpacity: 0.35,
     },
     onEachFeature(item, layerItem) {
-      layerItem.bindPopup(buildPopup(item.properties));
+      layerItem.bindPopup(buildPopup(item.properties, layerItem.getBounds().getCenter()));
       layerItem.on('click', () => handleBuildingClick(item, layerItem));
     },
   });
