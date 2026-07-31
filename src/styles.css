@@ -89,13 +89,6 @@ dd {
   font-size: 16px;
 }
 
-.note {
-  margin: 24px 0 0;
-  color: #59697d;
-  font-size: 15px;
-  line-height: 1.5;
-}
-
 .year-filter {
   margin-top: 28px;
   padding-top: 24px;
@@ -215,6 +208,26 @@ dd {
   margin: 10px 0 0;
   color: #59697d;
   font-size: 14px;
+}
+
+.scenario-note {
+  margin-top: 24px;
+  padding: 14px 16px;
+  border: 1px solid #d9e2ef;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.scenario-note h2 {
+  margin-bottom: 6px;
+  font-size: 18px;
+}
+
+.scenario-note p {
+  margin: 0;
+  color: #425466;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .leaflet-tooltip {
