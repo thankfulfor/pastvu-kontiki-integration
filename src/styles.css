@@ -54,14 +54,12 @@ h1 {
 }
 
 .workspace {
-  display: grid;
-  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
-  gap: 20px;
+  display: block;
   min-height: 0;
 }
 
 .panel {
-  align-self: stretch;
+  max-width: 1040px;
   padding: 22px;
   border: 1px solid #d9e2ef;
   border-radius: 8px;
@@ -276,8 +274,9 @@ dd {
 
 .map {
   width: 100%;
-  height: min(68vh, 720px);
+  height: min(70vh, 720px);
   min-height: 520px;
+  margin-top: 24px;
   overflow: hidden;
   border: 1px solid #d9e2ef;
   border-radius: 8px;
