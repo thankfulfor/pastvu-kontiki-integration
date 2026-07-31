@@ -57,7 +57,7 @@ h1 {
   display: grid;
   grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
   gap: 20px;
-  min-height: 640px;
+  min-height: 0;
 }
 
 .panel {
@@ -99,7 +99,9 @@ dd {
 }
 
 .map {
-  min-height: 640px;
+  width: 100%;
+  height: min(68vh, 720px);
+  min-height: 520px;
   overflow: hidden;
   border: 1px solid #d9e2ef;
   border-radius: 8px;
@@ -140,6 +142,10 @@ dd {
 
   .map,
   .workspace {
-    min-height: 520px;
+    min-height: 420px;
+  }
+
+  .map {
+    height: 58vh;
   }
 }
