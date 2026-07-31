@@ -1,14 +1,14 @@
-# Research Notes
+# Заметки исследования
 
 ## PastVu
 
-Known endpoint:
+Известный endpoint:
 
 ```text
 GET https://api.pastvu.com/api2?method=photo.giveForPage&params={"cid":2479426}
 ```
 
-Known useful fields:
+Полезные поля ответа:
 
 - `result.photo.cid`
 - `result.photo.file`
@@ -19,52 +19,52 @@ Known useful fields:
 - `result.photo.geo`
 - `result.photo.regions`
 
-Known error behavior:
+Поведение ошибок:
 
-- API errors are returned as JSON.
-- HTTP status can still be `200 OK`.
-- Integration code should check the top-level `code` field.
+- API возвращает ошибки в JSON.
+- HTTP-статус при ошибке может оставаться `200 OK`.
+- Интеграционный код должен проверять верхнеуровневое поле `code`.
 
 ## Kontiki Maps
 
-To research:
+Нужно исследовать:
 
-- public API or SDK;
-- custom marker support;
-- data import formats;
-- iframe/embed options;
-- licensing or usage restrictions.
+- есть ли публичный API или SDK;
+- можно ли добавлять пользовательские маркеры;
+- какие форматы импорта данных поддерживаются;
+- есть ли iframe или другой механизм встраивания;
+- какие есть лицензионные и пользовательские ограничения.
 
-Dataset page:
+Страница набора данных:
 
 ```text
 https://kontikimaps.ru/how-old/cities250/datasets?p=cities250
 ```
 
-Known dataset facts:
+Известные факты о наборе данных:
 
-- the dataset is distributed as GeoPackage (`.gpkg`);
-- the page states that the dataset is available under the Open Data Commons Open Database License (ODbL);
-- the dataset includes 80 Russian cities;
-- the first prototype can use Moscow only to reduce scope.
+- данные распространяются в формате GeoPackage (`.gpkg`);
+- на странице указана лицензия Open Data Commons Open Database License (ODbL);
+- набор содержит 80 городов России;
+- для первого прототипа можно взять только Москву, чтобы уменьшить объём проверки.
 
-License note:
+Заметка о лицензии:
 
-- Keep the repository license for project code separate from external data licensing.
-- If the project includes Kontiki-derived data, document attribution and ODbL share-alike requirements in a dedicated data license section.
-- Avoid calling the license "viral" in repository docs; use "share-alike" or "ODbL" instead.
+- Лицензию кода проекта нужно отделять от лицензии внешних данных.
+- Если в репозитории появятся данные, производные от Kontiki, нужно отдельно описать атрибуцию и требования ODbL share-alike.
+- В документации репозитория лучше не писать «вирусная лицензия»; точнее использовать «ODbL» или «лицензия с требованием share-alike».
 
-## Prototype Options
+## Варианты прототипа
 
-Option 1: Static frontend with map markers.
+Вариант 1: статический frontend с маркерами на карте.
 
-Option 2: Static frontend plus local JSON fixture.
+Вариант 2: статический frontend и локальный JSON-fixture.
 
-Option 3: Frontend with a small backend proxy if CORS or request limits block direct API calls.
+Вариант 3: frontend и небольшой backend-прокси, если прямые запросы заблокируют CORS или лимиты.
 
-## Open Decisions
+## Открытые решения
 
-- Which map technology to use if Kontiki Maps does not expose a public SDK.
-- Which PastVu API method to use for discovering photos near a location.
-- Whether the first prototype should use live API calls or a curated fixture.
-- Whether the repository will store Kontiki-derived data or only scripts/instructions for obtaining it.
+- Какую картографическую технологию использовать, если у Kontiki Maps нет публичного SDK.
+- Какой метод API PastVu использовать для поиска фотографий рядом с местом.
+- Использовать ли в первой версии живые API-запросы или подготовленный fixture.
+- Хранить ли в репозитории данные, производные от Kontiki, или только скрипты и инструкции по их получению.

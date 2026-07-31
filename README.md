@@ -1,40 +1,40 @@
-# PastVu Kontiki Integration
+# Интеграция PastVu и Kontiki Maps
 
-Small prototype and research notes for integrating PastVu photo data into a Kontiki Maps scenario.
+Небольшой прототип и исследовательские заметки о том, как использовать данные PastVu в картографическом сценарии Kontiki Maps.
 
-## Goal
+## Цель
 
-Build a minimal working integration that shows how historical photo data from PastVu can be used in a map-based interface, then document the integration process as a technical writing portfolio case.
+Сделать минимальный рабочий прототип: показать исторические фотографии PastVu в связке с картой, а затем описать процесс как кейс для портфолио технического писателя.
 
-## User Scenario
+## Пользовательский сценарий
 
-A map user opens a location, sees historical photos connected to this place, and can inspect a photo card with:
+Пользователь открывает место на карте, видит связанные с ним исторические фотографии и может открыть карточку снимка с основными данными:
 
-- title;
-- image;
-- year or date range;
-- location;
-- link to the original PastVu page.
+- название;
+- изображение;
+- год или диапазон дат;
+- место;
+- ссылка на исходную страницу PastVu.
 
-## Research Questions
+## Вопросы исследования
 
-- What PastVu API methods provide photo data by id, coordinates, or region?
-- Which fields are stable enough for a public integration example?
-- Does Kontiki Maps provide an API, SDK, embed mechanism, or data import format?
-- Can the prototype run as a static frontend, or does it need a small backend proxy?
-- What limitations should be documented for external developers?
+- Какие методы API PastVu возвращают фотографии по идентификатору, координатам или региону?
+- Какие поля ответа достаточно стабильны для публичного интеграционного примера?
+- Есть ли у Kontiki Maps API, SDK, механизм встраивания или формат импорта данных?
+- Может ли прототип работать как статический frontend, или нужен небольшой backend-прокси?
+- Какие ограничения нужно описать для внешних разработчиков?
 
-## First Iteration
+## Первая итерация
 
-Limit the prototype to Moscow. This keeps the dataset small enough for manual checks and makes it easier to document the integration decisions before expanding the scope.
+В первой версии прототипа используем только Москву. Так проще проверить данные вручную, не распыляться на весь набор городов и быстрее описать первые интеграционные решения.
 
-## Expected Outputs
+## Ожидаемые результаты
 
-- a small working prototype;
-- integration notes;
-- README for developers;
-- portfolio article describing the research, implementation decisions, and documentation work.
+- небольшой рабочий прототип;
+- заметки по исследованию API и данных;
+- README для разработчиков;
+- статья в портфолио о задаче, технических решениях, проверках и документации.
 
-## Current Status
+## Текущий статус
 
-Project initialized. The first step is to research Kontiki Maps integration options and choose the smallest viable prototype.
+Проект инициализирован. Следующий шаг — скачать и изучить данные Kontiki Maps по Москве, затем выбрать минимальный сценарий прототипа.
