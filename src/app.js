@@ -1,4 +1,4 @@
-const fixtureUrl = './data/fixtures/old-moscow-sample.geojson';
+const fixtureUrl = './data/fixtures/old-moscow-1917-1953.geojson';
 const pastvuApiUrl = 'https://api.pastvu.com/api2';
 const pastvuPhotoPageUrl = 'https://pastvu.com/p/';
 const pastvuImageUrl = 'https://pastvu.com/_p/d/';
