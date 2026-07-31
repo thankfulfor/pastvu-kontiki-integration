@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Интеграция PastVu и Kontiki Maps</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIINfQJGdK3xwJ8U4g8xj4f8XyV4h9Zg8k0="
+      crossorigin=""
+    >
+    <link rel="stylesheet" href="./src/styles.css">
+  </head>
+  <body>
+    <main class="layout">
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">Прототип</p>
+        <h1 id="page-title">Интеграция PastVu и Kontiki Maps</h1>
+        <p>
+          Первый шаг: отрисовать тестовую выборку Kontiki по старой Москве и проверить, какие данные можно использовать для будущей связки с фотографиями PastVu.
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="Карта и данные">
+        <aside class="panel">
+          <h2>Выборка</h2>
+          <dl>
+            <div>
+              <dt>Город</dt>
+              <dd>Москва (старая)</dd>
+            </div>
+            <div>
+              <dt>Объектов</dt>
+              <dd id="feature-count">загрузка...</dd>
+            </div>
+            <div>
+              <dt>Источник</dt>
+              <dd>Kontiki Maps, GeoPackage</dd>
+            </div>
+            <div>
+              <dt>Формат</dt>
+              <dd>GeoJSON, EPSG:4326</dd>
+            </div>
+          </dl>
+          <p class="note">
+            Кликните по полигону, чтобы посмотреть год, адрес и название объекта из тестовой выборки.
+          </p>
+        </aside>
+
+        <div id="map" class="map" role="application" aria-label="Карта старой Москвы"></div>
+      </section>
+    </main>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="./src/app.js"></script>
+  </body>
+</html>
