@@ -22,30 +22,6 @@
 
       <section class="workspace" aria-label="Карта и данные">
         <aside class="panel">
-          <h2>Выборка</h2>
-          <dl>
-            <div>
-              <dt>Город</dt>
-              <dd>Москва (старая)</dd>
-            </div>
-            <div>
-              <dt>Объектов</dt>
-              <dd id="feature-count">загрузка...</dd>
-            </div>
-            <div>
-              <dt>Период данных</dt>
-              <dd>1917—1953</dd>
-            </div>
-            <div>
-              <dt>Источник</dt>
-              <dd>Kontiki Maps, GeoPackage</dd>
-            </div>
-            <div>
-              <dt>Формат</dt>
-              <dd>GeoJSON, EPSG:4326</dd>
-            </div>
-          </dl>
-
           <section class="year-filter" aria-labelledby="year-filter-title">
             <h2 id="year-filter-title">Годы постройки зданий</h2>
             <div class="year-values">
@@ -105,6 +81,32 @@
             <div id="pastvu-results" class="pastvu-results" aria-live="polite">
               Выберите полигон на карте.
             </div>
+          </section>
+
+          <section class="data-summary" aria-labelledby="data-summary-title">
+            <h2 id="data-summary-title">О данных</h2>
+            <dl>
+              <div>
+                <dt>Город</dt>
+                <dd>Москва (старая)</dd>
+              </div>
+              <div>
+                <dt>Объектов</dt>
+                <dd id="feature-count">загрузка...</dd>
+              </div>
+              <div>
+                <dt>Период данных</dt>
+                <dd>1917—1953</dd>
+              </div>
+              <div>
+                <dt>Источник</dt>
+                <dd>Kontiki Maps, GeoPackage</dd>
+              </div>
+              <div>
+                <dt>Формат</dt>
+                <dd>GeoJSON, EPSG:4326</dd>
+              </div>
+            </dl>
           </section>
         </aside>
       </section>

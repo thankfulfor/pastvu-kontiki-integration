@@ -90,9 +90,7 @@ dd {
 }
 
 .year-filter {
-  margin-top: 28px;
-  padding-top: 24px;
-  border-top: 1px solid #d9e2ef;
+  margin-top: 0;
 }
 
 .year-filter h2 {
@@ -278,6 +276,33 @@ dd {
   color: #59697d;
   font-size: 14px;
   line-height: 1.45;
+}
+
+.data-summary {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #d9e2ef;
+  color: #6b7a90;
+}
+
+.data-summary h2 {
+  margin-bottom: 12px;
+  color: #59697d;
+  font-size: 14px;
+}
+
+.data-summary dl {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px 18px;
+}
+
+.data-summary dt {
+  font-size: 11px;
+}
+
+.data-summary dd {
+  color: #59697d;
+  font-size: 13px;
 }
 
 .photo-card {
