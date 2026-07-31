@@ -1,21 +1,21 @@
-const fixtureUrl = './data/fixtures/old-moscow-1917-1953.geojson';
 const pastvuApiUrl = 'https://api.pastvu.com/api2';
 const pastvuPhotoPageUrl = 'https://pastvu.com/p/';
 const pastvuImageUrl = 'https://pastvu.com/_p/d/';
 const yandexMapsUrl = 'https://yandex.ru/maps/';
+const fixtureDirectoryUrl = './data/fixtures/old-moscow-periods/';
 const yearScale = {
   min: 1357,
   max: 2021,
   periods: [
-    { from: 1357, to: 1688, color: '#a61f24' },
-    { from: 1689, to: 1916, color: '#bd3f3d' },
-    { from: 1917, to: 1923, color: '#d4663f' },
-    { from: 1924, to: 1952, color: '#f59a2f' },
-    { from: 1953, to: 1963, color: '#cfc366' },
-    { from: 1964, to: 1981, color: '#5d8758' },
-    { from: 1982, to: 1990, color: '#0f6b68' },
-    { from: 1991, to: 2009, color: '#187ca3' },
-    { from: 2010, to: 2021, color: '#35a3d1' },
+    { from: 1357, to: 1688, color: '#a61f24', count: 109, file: 'old-moscow-1357-1688.geojson' },
+    { from: 1689, to: 1916, color: '#bd3f3d', count: 6148, file: 'old-moscow-1689-1916.geojson' },
+    { from: 1917, to: 1923, color: '#d4663f', count: 3922, file: 'old-moscow-1917-1923.geojson' },
+    { from: 1924, to: 1952, color: '#f59a2f', count: 11976, file: 'old-moscow-1924-1952.geojson' },
+    { from: 1953, to: 1963, color: '#cfc366', count: 19963, file: 'old-moscow-1953-1963.geojson' },
+    { from: 1964, to: 1981, color: '#5d8758', count: 32823, file: 'old-moscow-1964-1981.geojson' },
+    { from: 1982, to: 1990, color: '#0f6b68', count: 11648, file: 'old-moscow-1982-1990.geojson' },
+    { from: 1991, to: 2009, color: '#187ca3', count: 21074, file: 'old-moscow-1991-2009.geojson' },
+    { from: 2010, to: 2021, color: '#35a3d1', count: 2935, file: 'old-moscow-2010-2021.geojson' },
   ],
 };
 
@@ -33,10 +33,14 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
 const buildingPolygonLayer = L.layerGroup().addTo(map);
 const pastvuLayer = L.layerGroup().addTo(map);
 const emptyValue = 'не указано';
+const totalFeatureCount = yearScale.periods.reduce((sum, period) => sum + period.count, 0);
 const featureRecords = [];
+const loadedPeriodIndexes = new Set();
+const loadingPeriodPromises = new Map();
+let renderRequestId = 0;
 const yearFilter = {
-  from: yearScale.min,
-  to: yearScale.max,
+  from: 1917,
+  to: 1953,
 };
 
 function escapeHtml(value) {
@@ -332,7 +336,54 @@ function createBuildingRecord(feature) {
   });
 }
 
-function renderBuildings() {
+function getRequiredPeriods() {
+  return yearScale.periods
+    .map((period, index) => ({ ...period, index }))
+    .filter((period) => period.from <= yearFilter.to && period.to >= yearFilter.from);
+}
+
+async function loadPeriod(period) {
+  if (loadedPeriodIndexes.has(period.index)) {
+    return;
+  }
+
+  if (loadingPeriodPromises.has(period.index)) {
+    return loadingPeriodPromises.get(period.index);
+  }
+
+  const promise = fetch(`${fixtureDirectoryUrl}${period.file}`)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Не удалось загрузить GeoJSON: ${response.status}`);
+      }
+
+      return response.json();
+    })
+    .then((geojson) => {
+      geojson.features.forEach(createBuildingRecord);
+      loadedPeriodIndexes.add(period.index);
+    })
+    .finally(() => {
+      loadingPeriodPromises.delete(period.index);
+    });
+
+  loadingPeriodPromises.set(period.index, promise);
+
+  return promise;
+}
+
+async function ensureCurrentPeriodsLoaded() {
+  const requiredPeriods = getRequiredPeriods();
+
+  if (!requiredPeriods.length) {
+    return;
+  }
+
+  setPastvuStatus('Загружаю здания выбранного периода...');
+  await Promise.all(requiredPeriods.map(loadPeriod));
+}
+
+function renderLoadedBuildings() {
   let visibleCount = 0;
 
   buildingPolygonLayer.clearLayers();
@@ -351,6 +402,44 @@ function renderBuildings() {
 
   if (visibleCountNode) {
     visibleCountNode.textContent = String(visibleCount);
+  }
+}
+
+async function renderBuildings({ fitBounds = false } = {}) {
+  const requestId = ++renderRequestId;
+
+  try {
+    await ensureCurrentPeriodsLoaded();
+
+    if (requestId !== renderRequestId) {
+      return;
+    }
+
+    renderLoadedBuildings();
+    setPastvuStatus('Выберите объект в выбранном диапазоне годов.');
+
+    if (fitBounds) {
+      const visiblePolygons = featureRecords
+        .filter((record) => isFeatureVisible(record.feature))
+        .map((record) => record.polygon);
+
+      if (visiblePolygons.length) {
+        const bounds = L.featureGroup(visiblePolygons).getBounds();
+
+        map.fitBounds(bounds, {
+          padding: [24, 24],
+        });
+      }
+    }
+  } catch (error) {
+    const visibleCountNode = document.querySelector('#visible-feature-count');
+
+    if (visibleCountNode) {
+      visibleCountNode.textContent = 'ошибка';
+    }
+
+    setPastvuStatus('Не удалось загрузить здания выбранного периода.');
+    console.error(error);
   }
 }
 
@@ -440,33 +529,6 @@ function setupYearFilter() {
   updateRangeUi();
 }
 
-fetch(fixtureUrl)
-  .then((response) => {
-    if (!response.ok) {
-      throw new Error(`Не удалось загрузить GeoJSON: ${response.status}`);
-    }
-
-    return response.json();
-  })
-  .then((geojson) => {
-    setCount(geojson.features.length);
-    setupYearFilter();
-
-    geojson.features.forEach(createBuildingRecord);
-    renderBuildings();
-
-    const bounds = L.featureGroup(featureRecords.map((record) => record.polygon)).getBounds();
-
-    map.fitBounds(bounds, {
-      padding: [24, 24],
-    });
-  })
-  .catch((error) => {
-    const countNode = document.querySelector('#feature-count');
-
-    if (countNode) {
-      countNode.textContent = 'ошибка';
-    }
-
-    console.error(error);
-  });
+setCount(totalFeatureCount);
+setupYearFilter();
+renderBuildings({ fitBounds: true });

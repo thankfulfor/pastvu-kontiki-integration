@@ -44,27 +44,41 @@ data/fixtures/old-moscow-sample.geojson
 ogr2ogr -f GeoJSON data/fixtures/old-moscow-sample.geojson /Users/zhanna/Downloads/HOITH_database_231118.gpkg all_cities_181123 -where "city = 'old moscow'" -limit 100 -t_srs EPSG:4326 -dim XY
 ```
 
-### Рабочая выборка для первой версии
+### Рабочие выборки по периодам
 
-Файл:
+Файлы:
 
 ```text
-data/fixtures/old-moscow-1917-1953.geojson
+data/fixtures/old-moscow-periods/
 ```
 
 Содержимое:
 
-- 16 867 объектов из слоя `all_cities_181123`;
+- 110 598 объектов из слоя `all_cities_181123`;
 - фильтр: `city = 'old moscow'`;
-- годы: `1917—1953`;
+- годы: `1357—2021`;
 - только объекты с непустым адресом;
 - формат: GeoJSON;
 - система координат: `EPSG:4326`;
 - геометрия: `MultiPolygon`;
-- размер: около 15 МБ.
+- данные разбиты на файлы по периодам цветной шкалы.
 
-Команда экспорта:
+Количество объектов по периодам:
+
+| Период | Объектов |
+| --- | ---: |
+| 1357—1688 | 109 |
+| 1689—1916 | 6 148 |
+| 1917—1923 | 3 922 |
+| 1924—1952 | 11 976 |
+| 1953—1963 | 19 963 |
+| 1964—1981 | 32 823 |
+| 1982—1990 | 11 648 |
+| 1991—2009 | 21 074 |
+| 2010—2021 | 2 935 |
+
+Пример команды экспорта для одного периода:
 
 ```bash
-ogr2ogr -f GeoJSON data/fixtures/old-moscow-1917-1953.geojson /Users/zhanna/Downloads/HOITH_database_231118.gpkg all_cities_181123 -where "city = 'old moscow' AND r_year_int >= 1917 AND r_year_int <= 1953 AND r_adress IS NOT NULL AND r_adress <> ''" -select r_year_int,r_name,r_adress,r_floors,city,city_russian,city_english,r_years_str -t_srs EPSG:4326 -dim XY
+ogr2ogr -f GeoJSON data/fixtures/old-moscow-periods/old-moscow-1924-1952.geojson /Users/zhanna/Downloads/HOITH_database_231118.gpkg all_cities_181123 -where "city = 'old moscow' AND r_year_int >= 1924 AND r_year_int <= 1952 AND r_adress IS NOT NULL AND r_adress <> ''" -select r_year_int,r_name,r_adress,r_floors,city,city_russian,city_english,r_years_str -t_srs EPSG:4326 -dim XY
 ```
