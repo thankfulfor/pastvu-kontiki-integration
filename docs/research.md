@@ -8,6 +8,19 @@
 GET https://api.pastvu.com/api2?method=photo.giveForPage&params={"cid":2479426}
 ```
 
+Для первого интеграционного сценария используем метод:
+
+```text
+GET https://api.pastvu.com/api2?method=photo.giveNearestPhotos&params={"geo":[55.740058,37.585245],"limit":5,"distance":200}
+```
+
+Решение для прототипа:
+
+- при клике на полигон Kontiki берём центр его bounds;
+- передаём координаты в `photo.giveNearestPhotos`;
+- ограничиваем радиус до 200 м и результат до 5 фотографий;
+- показываем найденные фотографии в боковой панели и маркерами на карте.
+
 Полезные поля ответа:
 
 - `result.photo.cid`

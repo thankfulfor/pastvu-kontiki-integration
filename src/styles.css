@@ -98,6 +98,70 @@ dd {
   line-height: 1.5;
 }
 
+.leaflet-tooltip {
+  font: 12px/1.3 Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.pastvu-panel {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #d9e2ef;
+}
+
+.pastvu-panel h2 {
+  margin-bottom: 12px;
+}
+
+.selected-object {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 16px;
+  color: #425466;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.selected-object strong {
+  color: #17212b;
+}
+
+.pastvu-results {
+  display: grid;
+  gap: 12px;
+  color: #59697d;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.photo-card {
+  display: grid;
+  gap: 6px;
+}
+
+.photo-card a {
+  display: grid;
+  gap: 8px;
+  color: #1d4ed8;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.photo-card a:hover {
+  text-decoration: underline;
+}
+
+.photo-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #dfe8f5;
+}
+
+.photo-card small {
+  color: #6b7a90;
+}
+
 .map {
   width: 100%;
   height: min(68vh, 720px);
