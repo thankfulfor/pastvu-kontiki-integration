@@ -98,6 +98,118 @@ dd {
   line-height: 1.5;
 }
 
+.year-filter {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #d9e2ef;
+}
+
+.year-filter h2 {
+  margin-bottom: 14px;
+}
+
+.year-values,
+.period-labels {
+  display: flex;
+  justify-content: space-between;
+}
+
+.year-values {
+  color: #17212b;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.range-control {
+  position: relative;
+  height: 44px;
+  margin: 10px 9px 4px;
+}
+
+.range-control::before,
+.range-active {
+  position: absolute;
+  top: 20px;
+  right: 0;
+  left: 0;
+  height: 6px;
+  border-radius: 999px;
+  content: "";
+}
+
+.range-control::before {
+  background: #d8e1ef;
+}
+
+.range-active {
+  background: #0ea5c6;
+}
+
+.range-control input {
+  position: absolute;
+  top: 4px;
+  left: -9px;
+  width: calc(100% + 18px);
+  height: 36px;
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+  appearance: none;
+}
+
+.range-control input::-webkit-slider-thumb {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 25%);
+  cursor: pointer;
+  pointer-events: auto;
+  appearance: none;
+}
+
+.range-control input::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 25%);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.range-control input::-webkit-slider-runnable-track,
+.range-control input::-moz-range-track {
+  background: transparent;
+}
+
+.period-scale {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  height: 28px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.period-scale span {
+  background: var(--period-color);
+}
+
+.period-labels {
+  margin-top: 6px;
+  color: #6b7a90;
+  font-size: 11px;
+}
+
+.year-filter-note {
+  margin: 10px 0 0;
+  color: #59697d;
+  font-size: 14px;
+}
+
 .leaflet-tooltip {
   font: 12px/1.3 Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }

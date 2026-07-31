@@ -41,6 +41,46 @@
               <dd>GeoJSON, EPSG:4326</dd>
             </div>
           </dl>
+
+          <section class="year-filter" aria-labelledby="year-filter-title">
+            <h2 id="year-filter-title">Годы</h2>
+            <div class="year-values">
+              <span id="year-from-value">1357</span>
+              <span id="year-to-value">2021</span>
+            </div>
+            <div class="range-control">
+              <div id="range-active" class="range-active"></div>
+              <input id="year-from" type="range" min="1357" max="2021" value="1357" step="1" aria-label="Начальный год">
+              <input id="year-to" type="range" min="1357" max="2021" value="2021" step="1" aria-label="Конечный год">
+            </div>
+            <div class="period-scale" aria-label="Исторические периоды">
+              <span style="--period-color: #a61f24"></span>
+              <span style="--period-color: #bd3f3d"></span>
+              <span style="--period-color: #d4663f"></span>
+              <span style="--period-color: #f59a2f"></span>
+              <span style="--period-color: #cfc366"></span>
+              <span style="--period-color: #5d8758"></span>
+              <span style="--period-color: #0f6b68"></span>
+              <span style="--period-color: #187ca3"></span>
+              <span style="--period-color: #35a3d1"></span>
+            </div>
+            <div class="period-labels" aria-hidden="true">
+              <span>1361</span>
+              <span>1689</span>
+              <span>1917</span>
+              <span>1924</span>
+              <span>1953</span>
+              <span>1964</span>
+              <span>1982</span>
+              <span>1991</span>
+              <span>2010</span>
+              <span>2021</span>
+            </div>
+            <p class="year-filter-note">
+              На карте показано объектов: <span id="visible-feature-count">0</span>.
+            </p>
+          </section>
+
           <p class="note">
             Кликните по синей точке или полигону, чтобы найти ближайшие фотографии PastVu.
           </p>

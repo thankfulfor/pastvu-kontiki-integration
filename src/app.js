@@ -2,6 +2,21 @@ const fixtureUrl = './data/fixtures/old-moscow-sample.geojson';
 const pastvuApiUrl = 'https://api.pastvu.com/api2';
 const pastvuPhotoPageUrl = 'https://pastvu.com/p/';
 const pastvuImageUrl = 'https://pastvu.com/_p/d/';
+const yearScale = {
+  min: 1357,
+  max: 2021,
+  periods: [
+    { from: 1357, to: 1688, color: '#a61f24' },
+    { from: 1689, to: 1916, color: '#bd3f3d' },
+    { from: 1917, to: 1923, color: '#d4663f' },
+    { from: 1924, to: 1952, color: '#f59a2f' },
+    { from: 1953, to: 1963, color: '#cfc366' },
+    { from: 1964, to: 1981, color: '#5d8758' },
+    { from: 1982, to: 1990, color: '#0f6b68' },
+    { from: 1991, to: 2009, color: '#187ca3' },
+    { from: 2010, to: 2021, color: '#35a3d1' },
+  ],
+};
 
 const map = L.map('map', {
   zoomControl: true,
@@ -14,9 +29,15 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 }).addTo(map);
 
+const buildingPolygonLayer = L.layerGroup().addTo(map);
 const buildingPointLayer = L.layerGroup().addTo(map);
 const pastvuLayer = L.layerGroup().addTo(map);
 const emptyValue = 'не указано';
+const featureRecords = [];
+const yearFilter = {
+  from: yearScale.min,
+  to: yearScale.max,
+};
 
 function escapeHtml(value) {
   return String(value)
@@ -74,6 +95,34 @@ function buildPopup(properties) {
   `;
 }
 
+function getPeriodColor(year) {
+  const period = yearScale.periods.find((item) => year >= item.from && year <= item.to);
+
+  return period?.color || '#64748b';
+}
+
+function getFeatureYear(feature) {
+  const rawYear = feature.properties.r_year_int;
+
+  if (rawYear === null || rawYear === undefined || rawYear === '') {
+    return null;
+  }
+
+  const year = Number(rawYear);
+
+  return Number.isFinite(year) ? year : null;
+}
+
+function isFeatureVisible(feature) {
+  const year = getFeatureYear(feature);
+
+  if (year === null) {
+    return yearFilter.from === yearScale.min && yearFilter.to === yearScale.max;
+  }
+
+  return year >= yearFilter.from && year <= yearFilter.to;
+}
+
 function buildPhotoPopup(photo) {
   const title = formatValue(photo.title);
   const year = formatYear(photo.year, photo.year2);
@@ -114,12 +163,20 @@ function setPastvuStatus(message) {
 
 function setSelectedObject(properties) {
   const selectedNode = document.querySelector('#selected-object');
+
+  if (!selectedNode) {
+    return;
+  }
+
+  if (!properties) {
+    selectedNode.textContent = 'Объект не выбран.';
+    return;
+  }
+
   const title = formatValue(properties.r_name || properties.r_adress);
   const year = formatValue(properties.r_years_str || properties.r_year_int);
 
-  if (selectedNode) {
-    selectedNode.innerHTML = `<strong>${title}</strong><span>${year}</span>`;
-  }
+  selectedNode.innerHTML = `<strong>${title}</strong><span>${year}</span>`;
 }
 
 function renderPastvuPhotos(photos) {
@@ -179,6 +236,8 @@ async function loadNearestPastvuPhotos(latlng) {
     geo: [latlng.lat, latlng.lng],
     distance: 200,
     limit: 5,
+    year: yearFilter.from,
+    year2: yearFilter.to,
   };
   const url = `${pastvuApiUrl}?method=photo.giveNearestPhotos&params=${encodeURIComponent(JSON.stringify(params))}`;
   const response = await fetch(url);
@@ -217,12 +276,14 @@ async function handleBuildingClick(feature, layerItem) {
 function addBuildingPoint(feature, layerItem) {
   const center = layerItem.getBounds().getCenter();
   const title = formatValue(feature.properties.r_name || feature.properties.r_adress);
+  const year = getFeatureYear(feature);
+  const color = year === null ? '#64748b' : getPeriodColor(year);
 
-  L.circleMarker(center, {
+  return L.circleMarker(center, {
     radius: 4,
-    color: '#1d4ed8',
+    color,
     weight: 1,
-    fillColor: '#2563eb',
+    fillColor: color,
     fillOpacity: 0.85,
   })
     .bindTooltip(title, {
@@ -231,6 +292,119 @@ function addBuildingPoint(feature, layerItem) {
     })
     .on('click', () => handleBuildingClick(feature, layerItem))
     .addTo(buildingPointLayer);
+}
+
+function createBuildingRecord(feature) {
+  const year = getFeatureYear(feature);
+  const color = year === null ? '#64748b' : getPeriodColor(year);
+  const polygon = L.geoJSON(feature, {
+    style: {
+      color,
+      weight: 1,
+      fillColor: color,
+      fillOpacity: 0.35,
+    },
+    onEachFeature(item, layerItem) {
+      layerItem.bindPopup(buildPopup(item.properties));
+      layerItem.on('click', () => handleBuildingClick(item, layerItem));
+    },
+  });
+  const layerItem = polygon.getLayers()[0];
+  const point = addBuildingPoint(feature, layerItem);
+
+  featureRecords.push({
+    feature,
+    polygon,
+    point,
+  });
+}
+
+function renderBuildings() {
+  let visibleCount = 0;
+
+  buildingPolygonLayer.clearLayers();
+  buildingPointLayer.clearLayers();
+  pastvuLayer.clearLayers();
+
+  featureRecords.forEach((record) => {
+    if (!isFeatureVisible(record.feature)) {
+      return;
+    }
+
+    record.polygon.addTo(buildingPolygonLayer);
+    record.point.addTo(buildingPointLayer);
+    visibleCount += 1;
+  });
+
+  const visibleCountNode = document.querySelector('#visible-feature-count');
+
+  if (visibleCountNode) {
+    visibleCountNode.textContent = String(visibleCount);
+  }
+}
+
+function updateRangeUi() {
+  const fromInput = document.querySelector('#year-from');
+  const toInput = document.querySelector('#year-to');
+  const fromValue = document.querySelector('#year-from-value');
+  const toValue = document.querySelector('#year-to-value');
+  const activeRange = document.querySelector('#range-active');
+  const rangeLength = yearScale.max - yearScale.min;
+  const left = ((yearFilter.from - yearScale.min) / rangeLength) * 100;
+  const right = 100 - ((yearFilter.to - yearScale.min) / rangeLength) * 100;
+
+  if (fromInput) {
+    fromInput.value = String(yearFilter.from);
+  }
+
+  if (toInput) {
+    toInput.value = String(yearFilter.to);
+  }
+
+  if (fromValue) {
+    fromValue.textContent = String(yearFilter.from);
+  }
+
+  if (toValue) {
+    toValue.textContent = String(yearFilter.to);
+  }
+
+  if (activeRange) {
+    activeRange.style.left = `${left}%`;
+    activeRange.style.right = `${right}%`;
+  }
+}
+
+function handleRangeInput() {
+  const fromInput = document.querySelector('#year-from');
+  const toInput = document.querySelector('#year-to');
+
+  if (!fromInput || !toInput) {
+    return;
+  }
+
+  let from = Number(fromInput.value);
+  let to = Number(toInput.value);
+
+  if (from > to) {
+    [from, to] = [to, from];
+  }
+
+  yearFilter.from = from;
+  yearFilter.to = to;
+  updateRangeUi();
+  setSelectedObject(null);
+  setPastvuStatus('Выберите объект в выбранном диапазоне годов.');
+  renderBuildings();
+}
+
+function setupYearFilter() {
+  const fromInput = document.querySelector('#year-from');
+  const toInput = document.querySelector('#year-to');
+
+  fromInput?.addEventListener('input', handleRangeInput);
+  toInput?.addEventListener('input', handleRangeInput);
+  updateRangeUi();
 }
 
 fetch(fixtureUrl)
@@ -243,22 +417,14 @@ fetch(fixtureUrl)
   })
   .then((geojson) => {
     setCount(geojson.features.length);
+    setupYearFilter();
 
-    const layer = L.geoJSON(geojson, {
-      style: {
-        color: '#2563eb',
-        weight: 1,
-        fillColor: '#60a5fa',
-        fillOpacity: 0.35,
-      },
-      onEachFeature(feature, layerItem) {
-        layerItem.bindPopup(buildPopup(feature.properties));
-        layerItem.on('click', () => handleBuildingClick(feature, layerItem));
-        addBuildingPoint(feature, layerItem);
-      },
-    }).addTo(map);
+    geojson.features.forEach(createBuildingRecord);
+    renderBuildings();
 
-    map.fitBounds(layer.getBounds(), {
+    const bounds = L.featureGroup(featureRecords.map((record) => record.polygon)).getBounds();
+
+    map.fitBounds(bounds, {
       padding: [24, 24],
     });
   })
