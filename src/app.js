@@ -31,7 +31,6 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
 }).addTo(map);
 
 const buildingPolygonLayer = L.layerGroup().addTo(map);
-const buildingPointLayer = L.layerGroup().addTo(map);
 const pastvuLayer = L.layerGroup().addTo(map);
 const emptyValue = 'не указано';
 const featureRecords = [];
@@ -306,31 +305,10 @@ async function handleBuildingClick(feature, layerItem) {
   }
 }
 
-function addBuildingPoint(feature, layerItem) {
-  const center = layerItem.getBounds().getCenter();
-  const title = formatValue(feature.properties.r_name || feature.properties.r_adress);
-  const year = getFeatureYear(feature);
-  const color = year === null ? '#64748b' : getPeriodColor(year);
-
-  return L.circleMarker(center, {
-    radius: 4.5,
-    color: '#ffffff',
-    weight: 1.2,
-    fillColor: color,
-    fillOpacity: 0.95,
-  })
-    .bindPopup(buildPopup(feature.properties, center))
-    .bindTooltip(title, {
-      direction: 'top',
-      opacity: 0.9,
-    })
-    .on('click', () => handleBuildingClick(feature, layerItem))
-    .addTo(buildingPointLayer);
-}
-
 function createBuildingRecord(feature) {
   const year = getFeatureYear(feature);
   const color = year === null ? '#64748b' : getPeriodColor(year);
+  const title = formatValue(feature.properties.r_name || feature.properties.r_adress);
   const polygon = L.geoJSON(feature, {
     style: {
       color,
@@ -340,16 +318,17 @@ function createBuildingRecord(feature) {
     },
     onEachFeature(item, layerItem) {
       layerItem.bindPopup(buildPopup(item.properties, layerItem.getBounds().getCenter()));
+      layerItem.bindTooltip(title, {
+        direction: 'top',
+        opacity: 0.9,
+      });
       layerItem.on('click', () => handleBuildingClick(item, layerItem));
     },
   });
-  const layerItem = polygon.getLayers()[0];
-  const point = addBuildingPoint(feature, layerItem);
 
   featureRecords.push({
     feature,
     polygon,
-    point,
   });
 }
 
@@ -357,7 +336,6 @@ function renderBuildings() {
   let visibleCount = 0;
 
   buildingPolygonLayer.clearLayers();
-  buildingPointLayer.clearLayers();
   pastvuLayer.clearLayers();
 
   featureRecords.forEach((record) => {
@@ -366,7 +344,6 @@ function renderBuildings() {
     }
 
     record.polygon.addTo(buildingPolygonLayer);
-    record.point.addTo(buildingPointLayer);
     visibleCount += 1;
   });
 
