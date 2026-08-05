@@ -80,5 +80,17 @@ data/fixtures/old-moscow-periods/
 Пример команды экспорта для одного периода:
 
 ```bash
-ogr2ogr -f GeoJSON data/fixtures/old-moscow-periods/old-moscow-1924-1952.geojson /Users/zhanna/Downloads/HOITH_database_231118.gpkg all_cities_181123 -where "city = 'old moscow' AND r_year_int >= 1924 AND r_year_int <= 1952 AND r_adress IS NOT NULL AND r_adress <> ''" -select r_year_int,r_name,r_adress,r_floors,city,city_russian,city_english,r_years_str -t_srs EPSG:4326 -dim XY
+ogr2ogr -f GeoJSON data/fixtures/old-moscow-periods/old-moscow-1924-1952.geojson /Users/zhanna/Downloads/HOITH_database_231118.gpkg all_cities_181123 -where "city = 'old moscow' AND r_year_int >= 1924 AND r_year_int <= 1952 AND r_adress IS NOT NULL AND r_adress <> ''" -select r_year_int,r_name,r_adress,r_floors,city,city_russian,city_english,r_years_str,isApartmentBuilding,livingQuarters,r_architect,r_photo_url,r_wikipedia -t_srs EPSG:4326 -dim XY
 ```
+
+В интерфейсе также показываются, если они заполнены: архитектор, признак многоквартирного дома, количество жилых помещений, внешняя ссылка из Kontiki и статья в Википедии. Поле `r_wikidata` в этой выборке не заполнено.
+
+### Поисковый индекс
+
+Файл `data/search-index.json` создаётся из рабочих GeoJSON-файлов командой:
+
+```bash
+node scripts/build-search-index.mjs
+```
+
+В нём нет контуров зданий. Для каждого объекта сохранены идентификатор, период, название, адрес, год и примерный центр контура. Индекс нужен, чтобы искать по всей выборке, не загружая все GeoJSON-файлы при открытии страницы.

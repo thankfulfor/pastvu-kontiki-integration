@@ -22,6 +22,13 @@
 
       <section class="workspace" aria-label="Карта и данные">
         <aside class="panel">
+          <section class="place-search" aria-labelledby="place-search-title">
+            <h2 id="place-search-title">Найти место</h2>
+            <label class="visually-hidden" for="place-search-input">Улица, адрес или название здания</label>
+            <input id="place-search-input" type="search" autocomplete="off" placeholder="Улица, адрес или название здания">
+            <div id="place-search-results" class="place-search-results" role="status" aria-live="polite"></div>
+          </section>
+
           <section class="year-filter" aria-labelledby="year-filter-title">
             <h2 id="year-filter-title">Годы постройки зданий</h2>
             <div class="year-values">
@@ -115,6 +122,6 @@
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     ></script>
-    <script src="./src/app.js"></script>
+    <script src="./src/app.js?v=20260805-1"></script>
   </body>
 </html>

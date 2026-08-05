@@ -3,6 +3,7 @@ const pastvuPhotoPageUrl = 'https://pastvu.com/p/';
 const pastvuImageUrl = 'https://pastvu.com/_p/d/';
 const yandexMapsUrl = 'https://yandex.ru/maps/';
 const fixtureDirectoryUrl = './data/fixtures/old-moscow-periods/';
+const searchIndexUrl = './data/search-index.json';
 const yearScale = {
   min: 1357,
   max: 2021,
@@ -37,10 +38,11 @@ const totalFeatureCount = yearScale.periods.reduce((sum, period) => sum + period
 const featureRecords = [];
 const loadedPeriodIndexes = new Set();
 const loadingPeriodPromises = new Map();
+let searchIndexPromise;
 let renderRequestId = 0;
 const yearFilter = {
   from: 1917,
-  to: 1953,
+  to: 1956,
 };
 
 function escapeHtml(value) {
@@ -60,6 +62,48 @@ function formatValue(value) {
   return escapeHtml(value);
 }
 
+function getSafeExternalUrl(value) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const url = new URL(value);
+
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+function formatExternalLink(value, label) {
+  const url = getSafeExternalUrl(value);
+
+  return url
+    ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">${label}</a>`
+    : '';
+}
+
+function getBuildingPhotoUrl(value) {
+  const url = getSafeExternalUrl(value);
+
+  if (!url) {
+    return null;
+  }
+
+  const photoUrl = new URL(url);
+  photoUrl.protocol = 'https:';
+
+  const isWikimediaPhoto =
+    photoUrl.hostname.endsWith('wikimedia.org') &&
+    (photoUrl.hostname.startsWith('upload.') || photoUrl.pathname.startsWith('/wiki/Special:FilePath/'));
+  const isMoscowHeritagePhoto =
+    photoUrl.hostname === 'okn-mk.mkrf.ru' && /^\/maps\/show\/id\/\d+\/?$/.test(photoUrl.pathname);
+  const hasImageExtension = /\.(avif|gif|jpe?g|png|webp)(?:$|[?#])/i.test(photoUrl.pathname);
+
+  return isWikimediaPhoto || isMoscowHeritagePhoto || hasImageExtension ? photoUrl.href : null;
+}
+
 function formatYear(year, year2) {
   if (year === null || year === undefined || year === '') {
     return emptyValue;
@@ -72,12 +116,49 @@ function formatYear(year, year2) {
   return `${formatValue(year)}—${formatValue(year2)}`;
 }
 
-function buildYandexMapsLink(latlng) {
+function formatFloors(value) {
+  const floors = Number(value);
+
+  if (!Number.isInteger(floors) || floors < 0) {
+    return formatValue(value);
+  }
+
+  const lastTwoDigits = floors % 100;
+  const lastDigit = floors % 10;
+  let unit = 'этажей';
+
+  if (lastTwoDigits < 11 || lastTwoDigits > 14) {
+    if (lastDigit === 1) {
+      unit = 'этаж';
+    } else if (lastDigit >= 2 && lastDigit <= 4) {
+      unit = 'этажа';
+    }
+  }
+
+  return `${floors} ${unit}`;
+}
+
+function normalizeSearchText(value) {
+  return String(value || '')
+    .toLocaleLowerCase('ru')
+    .replaceAll('ё', 'е')
+    .replace(/[^а-яa-z0-9]+/gi, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function startsWithSearchTokens(text, tokens) {
+  const words = text.split(' ');
+
+  return tokens.every((token) => words.some((word) => word.startsWith(token)));
+}
+
+function buildYandexMapsLink(latlng, address) {
   const lat = latlng.lat.toFixed(6);
   const lng = latlng.lng.toFixed(6);
   const params = new URLSearchParams({
     ll: `${lng},${lat}`,
-    text: `${lat} ${lng}`,
+    text: address ? `${address}, Москва` : `${lat} ${lng}`,
     z: '17',
   });
 
@@ -85,28 +166,81 @@ function buildYandexMapsLink(latlng) {
 }
 
 function buildPopup(properties, latlng) {
-  const title = formatValue(properties.r_name || properties.r_adress);
+  const rawTitle = properties.r_name || properties.r_adress;
+  const rawAddress = properties.r_adress;
+  const title = formatValue(rawTitle);
   const year = formatValue(properties.r_years_str || properties.r_year_int);
-  const address = formatValue(properties.r_adress);
-  const floors = formatValue(properties.r_floors);
-  const yandexUrl = latlng ? buildYandexMapsLink(latlng) : null;
+  const address = formatValue(rawAddress);
+  const floors = formatFloors(properties.r_floors);
+  const hasDistinctAddress =
+    rawTitle && rawAddress &&
+    String(rawTitle).trim().toLocaleLowerCase('ru') !== String(rawAddress).trim().toLocaleLowerCase('ru');
+  const architect = properties.r_architect ? formatValue(properties.r_architect) : '';
+  const isApartmentBuilding = Number(properties.isApartmentBuilding) === 1;
+  const buildingPhotoUrl = getBuildingPhotoUrl(properties.r_photo_url);
+  const kontikiLink = buildingPhotoUrl ? '' : formatExternalLink(properties.r_photo_url, 'Открыть ссылку из Kontiki');
+  const wikipediaLink = formatExternalLink(properties.r_wikipedia, 'Открыть статью в Википедии');
+  const yandexUrl = latlng ? buildYandexMapsLink(latlng, rawAddress) : null;
 
   return `
     <article class="popup">
       <h3>${title}</h3>
+      ${
+        buildingPhotoUrl
+          ? `<a class="popup-image-link" href="${escapeHtml(buildingPhotoUrl)}" target="_blank" rel="noreferrer">
+              <img class="popup-image" src="${escapeHtml(buildingPhotoUrl)}" alt="Фотография здания: ${title}">
+            </a>`
+          : ''
+      }
       <dl>
         <div>
           <dt>Год</dt>
           <dd>${year}</dd>
         </div>
-        <div>
-          <dt>Адрес</dt>
-          <dd>${address}</dd>
-        </div>
+        ${
+          hasDistinctAddress
+            ? `<div>
+                <dt>Адрес</dt>
+                <dd>${address}</dd>
+              </div>`
+            : ''
+        }
         <div>
           <dt>Этажей</dt>
           <dd>${floors}</dd>
         </div>
+        ${
+          isApartmentBuilding
+            ? `<div>
+                <dt>Тип</dt>
+                <dd>Многоквартирный дом</dd>
+              </div>`
+            : ''
+        }
+        ${
+          architect
+            ? `<div>
+                <dt>Архитектор</dt>
+                <dd>${architect}</dd>
+              </div>`
+            : ''
+        }
+        ${
+          kontikiLink
+            ? `<div>
+                <dt>Материалы</dt>
+                <dd>${kontikiLink}</dd>
+              </div>`
+            : ''
+        }
+        ${
+          wikipediaLink
+            ? `<div>
+                <dt>Справка</dt>
+                <dd>${wikipediaLink}</dd>
+              </div>`
+            : ''
+        }
         ${
           yandexUrl
             ? `<div>
@@ -200,7 +334,7 @@ function setSelectedObject(properties, latlng) {
 
   const title = formatValue(properties.r_name || properties.r_adress);
   const year = formatValue(properties.r_years_str || properties.r_year_int);
-  const yandexUrl = latlng ? buildYandexMapsLink(latlng) : null;
+  const yandexUrl = latlng ? buildYandexMapsLink(latlng, properties.r_adress) : null;
 
   selectedNode.innerHTML = `
     <strong>${title}</strong>
@@ -326,6 +460,17 @@ function createBuildingRecord(feature) {
         direction: 'top',
         opacity: 0.9,
       });
+      layerItem.on('popupopen', () => {
+        const popupImage = layerItem.getPopup()?.getElement()?.querySelector('.popup-image');
+
+        popupImage?.addEventListener(
+          'error',
+          () => {
+            popupImage.closest('.popup-image-link')?.remove();
+          },
+          { once: true }
+        );
+      });
       layerItem.on('click', () => handleBuildingClick(item, layerItem));
     },
   });
@@ -333,6 +478,8 @@ function createBuildingRecord(feature) {
   featureRecords.push({
     feature,
     polygon,
+    searchId: feature.properties.__searchId,
+    layer: polygon.getLayers()[0],
   });
 }
 
@@ -360,7 +507,10 @@ async function loadPeriod(period) {
       return response.json();
     })
     .then((geojson) => {
-      geojson.features.forEach(createBuildingRecord);
+      geojson.features.forEach((feature, featureIndex) => {
+        feature.properties.__searchId = `${period.index}:${featureIndex}`;
+        createBuildingRecord(feature);
+      });
       loadedPeriodIndexes.add(period.index);
     })
     .finally(() => {
@@ -529,6 +679,203 @@ function setupYearFilter() {
   updateRangeUi();
 }
 
+async function getSearchIndex() {
+  if (!searchIndexPromise) {
+    searchIndexPromise = fetch(searchIndexUrl)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Не удалось загрузить индекс поиска: ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((records) =>
+        records.map((record) => ({
+          ...record,
+          text: normalizeSearchText(`${record.n} ${record.a}`),
+          toponymText: normalizeSearchText(record.t),
+        }))
+      );
+  }
+
+  return searchIndexPromise;
+}
+
+function formatSearchResultCount(count) {
+  const lastTwoDigits = count % 100;
+  const lastDigit = count % 10;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+    return 'зданий';
+  }
+
+  if (lastDigit === 1) {
+    return 'здание';
+  }
+
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return 'здания';
+  }
+
+  return 'зданий';
+}
+
+function renderSearchResults(groups, query) {
+  const resultsNode = document.querySelector('#place-search-results');
+
+  if (!resultsNode) {
+    return;
+  }
+
+  if (query.length < 2) {
+    resultsNode.replaceChildren();
+    return;
+  }
+
+  const { toponyms, objects, addresses } = groups;
+
+  if (!toponyms.length && !objects.length && !addresses.length) {
+    resultsNode.textContent = 'Ничего не найдено.';
+    return;
+  }
+
+  const renderRecords = (label, records) => {
+    if (!records.length) {
+      return '';
+    }
+
+    return `<section class="place-search-group">
+      <p>${label}</p>
+      ${records.map((record) => {
+      const title = formatValue(record.n || record.a);
+      const address = record.n && record.a ? `<small>${formatValue(record.a)}</small>` : '';
+      const year = record.y ? `<small>${formatValue(record.y)}</small>` : '';
+
+      return `<button type="button" class="place-search-result" data-search-id="${escapeHtml(record.id)}">
+        <span>${title}</span>
+        ${address}${year}
+      </button>`;
+      }).join('')}
+    </section>`;
+  };
+  const toponymGroup = toponyms.length
+    ? `<section class="place-search-group">
+        <p>Улицы и площади</p>
+        ${toponyms.map((toponym) => `<button type="button" class="place-search-result" data-search-toponym="${escapeHtml(toponym.title)}">
+          <span>${formatValue(toponym.title)}</span>
+          <small>${toponym.count} ${formatSearchResultCount(toponym.count)}</small>
+        </button>`).join('')}
+      </section>`
+    : '';
+
+  resultsNode.innerHTML = `${toponymGroup}${renderRecords('Объекты', objects)}${renderRecords('Адреса', addresses)}`;
+}
+
+async function focusSearchResult(result) {
+  const period = yearScale.periods[result.p];
+
+  if (!period) {
+    return;
+  }
+
+  yearFilter.from = period.from;
+  yearFilter.to = period.to;
+  updateRangeUi();
+  await renderBuildings();
+
+  const record = featureRecords.find((item) => item.searchId === result.id);
+
+  if (!record || !record.layer) {
+    return;
+  }
+
+  const center = record.layer.getBounds().getCenter();
+  map.flyTo(center, Math.max(map.getZoom(), 16));
+  record.layer.openPopup();
+  handleBuildingClick(record.feature, record.layer);
+}
+
+function setupPlaceSearch() {
+  const input = document.querySelector('#place-search-input');
+  const resultsNode = document.querySelector('#place-search-results');
+  let requestId = 0;
+
+  input?.addEventListener('input', async () => {
+    const query = normalizeSearchText(input.value);
+    const currentRequestId = ++requestId;
+
+    if (query.length < 2) {
+      renderSearchResults({ toponyms: [], objects: [], addresses: [] }, query);
+      return;
+    }
+
+    resultsNode.textContent = 'Ищу…';
+
+    try {
+      const records = await getSearchIndex();
+
+      if (currentRequestId !== requestId) {
+        return;
+      }
+
+      const tokens = query.split(' ');
+      const matches = records
+        .filter((record) => tokens.every((token) => record.text.includes(token)))
+        .sort((left, right) => {
+          const leftStartsWithQuery = left.text.startsWith(query) ? 0 : 1;
+          const rightStartsWithQuery = right.text.startsWith(query) ? 0 : 1;
+
+          return leftStartsWithQuery - rightStartsWithQuery || left.a.localeCompare(right.a, 'ru');
+        })
+        .slice(0, 40);
+
+      const toponymMap = new Map();
+
+      matches
+        .filter((record) => record.t && startsWithSearchTokens(record.toponymText, tokens))
+        .forEach((record) => {
+          const entry = toponymMap.get(record.toponymText) || { title: record.t, count: 0 };
+
+          entry.count += 1;
+          toponymMap.set(record.toponymText, entry);
+        });
+
+      const toponyms = [...toponymMap.values()]
+        .sort((left, right) => right.count - left.count || left.title.localeCompare(right.title, 'ru'))
+        .slice(0, 5);
+      const objects = matches
+        .filter((record) => record.n && tokens.every((token) => normalizeSearchText(record.n).includes(token)))
+        .slice(0, 5);
+      const addresses = matches.slice(0, 6);
+
+      renderSearchResults({ toponyms, objects, addresses }, query);
+    } catch (error) {
+      resultsNode.textContent = 'Не удалось загрузить поиск.';
+      console.error(error);
+    }
+  });
+
+  resultsNode?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-search-id]');
+    const toponymButton = event.target.closest('[data-search-toponym]');
+
+    if (toponymButton && input) {
+      input.value = toponymButton.dataset.searchToponym;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
+    }
+
+    if (!button) {
+      return;
+    }
+
+    getSearchIndex()
+      .then((records) => records.find((record) => record.id === button.dataset.searchId))
+      .then((result) => result && focusSearchResult(result));
+  });
+}
+
 setCount(totalFeatureCount);
 setupYearFilter();
+setupPlaceSearch();
 renderBuildings({ fitBounds: true });
