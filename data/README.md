@@ -83,7 +83,7 @@ data/fixtures/old-moscow-periods/
 ogr2ogr -f GeoJSON data/fixtures/old-moscow-periods/old-moscow-1924-1952.geojson /Users/zhanna/Downloads/HOITH_database_231118.gpkg all_cities_181123 -where "city = 'old moscow' AND r_year_int >= 1924 AND r_year_int <= 1952 AND r_adress IS NOT NULL AND r_adress <> ''" -select r_year_int,r_name,r_adress,r_floors,city,city_russian,city_english,r_years_str,isApartmentBuilding,livingQuarters,r_architect,r_photo_url,r_wikipedia -t_srs EPSG:4326 -dim XY
 ```
 
-В интерфейсе также показываются, если они заполнены: архитектор, признак многоквартирного дома, количество жилых помещений, внешняя ссылка из Kontiki и статья в Википедии. Поле `r_wikidata` в этой выборке не заполнено.
+В интерфейсе также показываются, если они заполнены: архитектор, признак многоквартирного дома, количество жилых помещений, внешняя ссылка из Kontiki, статья в Википедии и ссылки на статьи Дмитрия Сасина в поле `r_sasin_sources`. Поле `r_wikidata` в этой выборке не заполнено.
 
 ### Поисковый индекс
 

@@ -84,6 +84,25 @@ function formatExternalLink(value, label) {
     : '';
 }
 
+function formatSasinSourceLinks(value) {
+  if (!Array.isArray(value)) {
+    return '';
+  }
+
+  const links = value
+    .map((source) => {
+      const url = getSafeExternalUrl(source?.url);
+      const title = source?.title || 'Статья Дмитрия Сасина';
+
+      return url
+        ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">${formatValue(title)}</a>`
+        : '';
+    })
+    .filter(Boolean);
+
+  return links.join('<br>');
+}
+
 function getBuildingPhotoUrl(value) {
   const url = getSafeExternalUrl(value);
 
@@ -138,6 +157,12 @@ function formatFloors(value) {
   return `${floors} ${unit}`;
 }
 
+function hasFloorsValue(value) {
+  const floors = Number(value);
+
+  return Number.isInteger(floors) && floors > 0;
+}
+
 function normalizeSearchText(value) {
   return String(value || '')
     .toLocaleLowerCase('ru')
@@ -171,6 +196,7 @@ function buildPopup(properties, latlng) {
   const title = formatValue(rawTitle);
   const year = formatValue(properties.r_years_str || properties.r_year_int);
   const address = formatValue(rawAddress);
+  const hasFloors = hasFloorsValue(properties.r_floors);
   const floors = formatFloors(properties.r_floors);
   const hasDistinctAddress =
     rawTitle && rawAddress &&
@@ -180,6 +206,7 @@ function buildPopup(properties, latlng) {
   const buildingPhotoUrl = getBuildingPhotoUrl(properties.r_photo_url);
   const kontikiLink = buildingPhotoUrl ? '' : formatExternalLink(properties.r_photo_url, 'Открыть ссылку из Kontiki');
   const wikipediaLink = formatExternalLink(properties.r_wikipedia, 'Открыть статью в Википедии');
+  const sasinLinks = formatSasinSourceLinks(properties.r_sasin_sources);
   const yandexUrl = latlng ? buildYandexMapsLink(latlng, rawAddress) : null;
 
   return `
@@ -205,10 +232,14 @@ function buildPopup(properties, latlng) {
               </div>`
             : ''
         }
-        <div>
-          <dt>Этажей</dt>
-          <dd>${floors}</dd>
-        </div>
+        ${
+          hasFloors
+            ? `<div>
+                <dt>Этажей</dt>
+                <dd>${floors}</dd>
+              </div>`
+            : ''
+        }
         ${
           isApartmentBuilding
             ? `<div>
@@ -238,6 +269,14 @@ function buildPopup(properties, latlng) {
             ? `<div>
                 <dt>Справка</dt>
                 <dd>${wikipediaLink}</dd>
+              </div>`
+            : ''
+        }
+        ${
+          sasinLinks
+            ? `<div>
+                <dt>Статьи</dt>
+                <dd>${sasinLinks}</dd>
               </div>`
             : ''
         }
@@ -795,6 +834,49 @@ async function focusSearchResult(result) {
   handleBuildingClick(record.feature, record.layer);
 }
 
+async function focusSearchToponym(toponymTitle) {
+  const records = await getSearchIndex();
+  const toponymText = normalizeSearchText(toponymTitle);
+  const matchingRecords = records.filter((record) => record.toponymText === toponymText);
+
+  if (!matchingRecords.length) {
+    return;
+  }
+
+  const periodIndexes = matchingRecords.map((record) => record.p).filter((periodIndex) => yearScale.periods[periodIndex]);
+  const firstPeriod = yearScale.periods[Math.min(...periodIndexes)];
+  const lastPeriod = yearScale.periods[Math.max(...periodIndexes)];
+
+  yearFilter.from = firstPeriod.from;
+  yearFilter.to = lastPeriod.to;
+  updateRangeUi();
+  setSelectedObject(null);
+  await renderBuildings();
+  setPastvuStatus('Выберите объект на выбранной улице.');
+
+  const matchingIds = new Set(matchingRecords.map((record) => record.id));
+  const matchingPolygons = featureRecords
+    .filter((record) => matchingIds.has(record.searchId))
+    .map((record) => record.polygon);
+
+  if (matchingPolygons.length) {
+    map.fitBounds(L.featureGroup(matchingPolygons).getBounds(), {
+      padding: [32, 32],
+    });
+  }
+
+  renderSearchResults({
+    toponyms: [{ title: toponymTitle, count: matchingRecords.length }],
+    objects: matchingRecords
+      .filter((record) => record.n)
+      .sort((left, right) => left.a.localeCompare(right.a, 'ru'))
+      .slice(0, 5),
+    addresses: matchingRecords
+      .sort((left, right) => left.a.localeCompare(right.a, 'ru'))
+      .slice(0, 6),
+  }, toponymText);
+}
+
 function setupPlaceSearch() {
   const input = document.querySelector('#place-search-input');
   const resultsNode = document.querySelector('#place-search-results');
@@ -861,7 +943,11 @@ function setupPlaceSearch() {
 
     if (toponymButton && input) {
       input.value = toponymButton.dataset.searchToponym;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
+      resultsNode.textContent = 'Показываю здания на улице...';
+      focusSearchToponym(toponymButton.dataset.searchToponym).catch((error) => {
+        resultsNode.textContent = 'Не удалось показать улицу.';
+        console.error(error);
+      });
       return;
     }
 
