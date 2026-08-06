@@ -866,7 +866,7 @@ async function focusSearchToponym(toponymTitle) {
   }
 
   renderSearchResults({
-    toponyms: [{ title: toponymTitle, count: matchingRecords.length }],
+    toponyms: [],
     objects: matchingRecords
       .filter((record) => record.n)
       .sort((left, right) => left.a.localeCompare(right.a, 'ru'))
@@ -913,7 +913,7 @@ function setupPlaceSearch() {
 
       const toponymMap = new Map();
 
-      matches
+      records
         .filter((record) => record.t && startsWithSearchTokens(record.toponymText, tokens))
         .forEach((record) => {
           const entry = toponymMap.get(record.toponymText) || { title: record.t, count: 0 };
